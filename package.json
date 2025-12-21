@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "vite",
@@ -23,6 +23,6 @@
     "vite": "^6.0.0"
   },
   "overrides": {
-    "node-domexception": "1.0.0"
+    "node-domexception": "$node-domexception"
   }
 }
