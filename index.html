@@ -20,6 +20,8 @@
             background: linear-gradient(135deg, #fff5f7 0%, #f0f9ff 100%);
             background-attachment: fixed;
             color: #475569;
+            margin: 0;
+            padding: 0;
         }
         .kanji-font {
             font-family: 'Noto+Sans+JP', sans-serif;
@@ -60,13 +62,16 @@
             background: #ffb7c5;
             border-radius: 10px;
         }
+        #root {
+            min-height: 100vh;
+        }
     </style>
 <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
   }
 }
@@ -74,5 +79,6 @@
 </head>
 <body class="overflow-x-hidden">
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
