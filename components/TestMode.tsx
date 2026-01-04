@@ -33,18 +33,68 @@ const TestMode: React.FC = () => {
 
   const currentQuestion = questions[currentIdx];
 
+  /**
+   * Akıllı Çeldirici (Distractor) Algoritması
+   * Doğru cevaba en yakın şıkları bulur.
+   */
   const generateOptions = (item: KanjiItem, type: 'kanji-to-reading' | 'reading-to-kanji') => {
     const isKtoR = type === 'kanji-to-reading';
     const correctAnswer = isKtoR ? item.reading : item.kanji;
     
-    const distractors = kanjiData
-      .filter(d => isKtoR ? d.reading !== item.reading : d.kanji !== item.kanji)
-      .map(d => isKtoR ? d.reading : d.kanji)
-      .filter((v, i, a) => a.indexOf(v) === i)
+    // Kendisi hariç tüm adaylar
+    const candidates = kanjiData.filter(d => 
+      isKtoR ? d.reading !== item.reading : d.kanji !== item.kanji
+    );
+
+    const scoredCandidates = candidates.map(c => {
+      let score = 0;
+      const cVal = isKtoR ? c.reading : c.kanji;
+      const cKanji = c.kanji;
+      const targetKanji = item.kanji;
+
+      // 1. Ortak Karakter Paylaşımı (En Güçlü Çeldirici)
+      // Örn: 放送 (housou) vs 開放 (kaihou) - İkisinde de '放' var.
+      const sharedChars = [...cKanji].filter(char => targetKanji.includes(char));
+      if (sharedChars.length > 0) {
+        score += 60; 
+      }
+
+      // 2. Hafta Yakınlığı
+      // Aynı haftadaki kelimeler genelde benzer temadadır.
+      if (c.week === item.week) {
+        score += 40;
+      } else if (Math.abs(c.week - item.week) === 1) {
+        score += 15;
+      }
+
+      // 3. Fonetik Benzerlik (Okunuş için)
+      if (isKtoR) {
+        // Başlangıç sesi aynılığı
+        if (cVal[0] === correctAnswer[0]) score += 30;
+        // Bitiş sesi aynılığı (kafiyeli okunuşlar)
+        if (cVal.slice(-1) === correctAnswer.slice(-1)) score += 20;
+        // Benzer uzunluk
+        if (Math.abs(cVal.length - correctAnswer.length) <= 1) score += 15;
+      } else {
+        // Kanji görsel benzerlik (Karakter sayısı aynılığı)
+        if (cVal.length === correctAnswer.length) score += 25;
+      }
+
+      // 4. Rastgelelik (Çeşitlilik için küçük bir pay)
+      score += Math.random() * 20;
+
+      return { value: cVal, score };
+    });
+
+    // En benzer 8 adayı al ve içlerinden rastgele 3 tanesini seç
+    const finalDistractors = scoredCandidates
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8)
       .sort(() => Math.random() - 0.5)
-      .slice(0, 3);
+      .slice(0, 3)
+      .map(c => c.value);
     
-    return [...distractors, correctAnswer].sort(() => Math.random() - 0.5);
+    return [...finalDistractors, correctAnswer].sort(() => Math.random() - 0.5);
   };
 
   const handleWeekSelect = (week: number | 'Tümü') => {
@@ -270,6 +320,8 @@ const TestMode: React.FC = () => {
     );
   }
 
+  if (!currentQuestion) return null;
+
   return (
     <div className="w-full max-w-lg flex flex-col gap-8">
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-rose-100 border border-rose-50 p-10 text-center relative overflow-hidden">
@@ -291,23 +343,23 @@ const TestMode: React.FC = () => {
 
         <div className="flex flex-col items-center">
           <h2 className={`font-bold text-slate-800 kanji-font leading-none mb-6 select-none drop-shadow-sm ${
-            currentQuestion?.type === 'kanji-to-reading' ? 'text-[7rem]' : 'text-[4rem] text-rose-500'
+            currentQuestion.type === 'kanji-to-reading' ? 'text-[7rem]' : 'text-[4rem] text-rose-500'
           }`}>
-            {currentQuestion?.type === 'kanji-to-reading' 
+            {currentQuestion.type === 'kanji-to-reading' 
               ? currentQuestion.item.kanji 
               : currentQuestion.item.reading}
           </h2>
           <p className="text-rose-400 font-bold text-lg mb-2">
-            {currentQuestion?.type === 'kanji-to-reading' 
+            {currentQuestion.type === 'kanji-to-reading' 
               ? 'Bu kelimenin okunuşu hangisidir?' 
               : 'Bu okunuşa ait kanji hangisidir?'}
           </p>
-          <p className="text-slate-400 text-sm italic">Anlamı: {currentQuestion?.item.meaning}</p>
+          <p className="text-slate-400 text-sm italic">Anlamı: {currentQuestion.item.meaning}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {currentQuestion?.options.map((option, idx) => {
+        {currentQuestion.options.map((option, idx) => {
           const isKtoR = currentQuestion.type === 'kanji-to-reading';
           const correctAnswer = isKtoR ? currentQuestion.item.reading : currentQuestion.item.kanji;
           const isCorrect = option === correctAnswer;
