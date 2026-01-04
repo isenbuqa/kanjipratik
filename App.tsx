@@ -8,7 +8,6 @@ import {
   Filter, 
   Shuffle, 
   Flower2,
-  Settings,
   Brain
 } from 'lucide-react';
 import { kanjiData } from './data/kanjiData';
@@ -78,10 +77,9 @@ const App: React.FC = () => {
                 className="appearance-none bg-white/60 border border-rose-100 text-rose-800 py-2 pl-4 pr-10 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-rose-200/50 cursor-pointer transition-all hover:bg-white"
               >
                 <option value="Tümü">Tümü</option>
-                <option value="9">Hafta 9</option>
-                <option value="10">Hafta 10</option>
-                <option value="11">Hafta 11</option>
-                <option value="12">Hafta 12</option>
+                {[9, 10, 11, 12, 13, 14, 15].map(w => (
+                  <option key={w} value={w.toString()}>Hafta {w}</option>
+                ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-rose-300">
                 <Filter size={16} />

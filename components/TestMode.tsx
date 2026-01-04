@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { KanjiItem } from '../types';
-// Fixed the missing 'Settings' import
 import { CheckCircle2, XCircle, Trophy, RefreshCw, ArrowRight, Brain, BookOpen, AlertCircle, Type as TypeIcon, Languages, Settings } from 'lucide-react';
 import { kanjiData } from '../data/kanjiData';
 
@@ -41,7 +40,7 @@ const TestMode: React.FC = () => {
     const distractors = kanjiData
       .filter(d => isKtoR ? d.reading !== item.reading : d.kanji !== item.kanji)
       .map(d => isKtoR ? d.reading : d.kanji)
-      .filter((v, i, a) => a.indexOf(v) === i) // unique
+      .filter((v, i, a) => a.indexOf(v) === i)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
     
@@ -112,7 +111,6 @@ const TestMode: React.FC = () => {
     setSelectedWeek('Tümü');
   };
 
-  // 1. Week Selection Screen
   if (step === 'WEEK_SELECTION') {
     return (
       <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in duration-500 border border-rose-50">
@@ -124,33 +122,28 @@ const TestMode: React.FC = () => {
           <p className="text-slate-400 text-center max-w-sm">Test etmek istediğin haftayı seçerek başla!</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {[9, 10, 11, 12].map(week => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[9, 10, 11, 12, 13, 14, 15].map(week => (
             <button
               key={week}
               onClick={() => handleWeekSelect(week)}
-              className="group p-6 bg-white border-2 border-slate-100 rounded-3xl text-left hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-95"
+              className="group p-4 bg-white border-2 border-slate-100 rounded-3xl text-left hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-95"
             >
-              <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest mb-1">Seviye</p>
-              <p className="text-xl font-bold text-slate-700">Hafta {week}</p>
+              <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest mb-1">Hafta</p>
+              <p className="text-xl font-bold text-slate-700">{week}</p>
             </button>
           ))}
           <button
             onClick={() => handleWeekSelect('Tümü')}
-            className="col-span-2 p-6 bg-rose-400 text-white rounded-3xl flex items-center justify-between hover:bg-rose-500 shadow-lg shadow-rose-200 transition-all active:scale-95"
+            className="col-span-2 sm:col-span-1 p-4 bg-rose-400 text-white rounded-3xl flex items-center justify-center hover:bg-rose-500 shadow-lg shadow-rose-200 transition-all active:scale-95"
           >
-            <div className="text-left">
-              <p className="text-[10px] font-black text-rose-100 uppercase tracking-widest mb-1">Karma Test</p>
-              <p className="text-xl font-bold">Tüm Haftalar</p>
-            </div>
-            <ArrowRight size={24} />
+            <p className="text-sm font-bold">Hepsi</p>
           </button>
         </div>
       </div>
     );
   }
 
-  // 2. Type Selection Screen
   if (step === 'TYPE_SELECTION') {
     return (
       <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in duration-500 border border-rose-50">
@@ -201,7 +194,6 @@ const TestMode: React.FC = () => {
     );
   }
 
-  // 3. Results Screen
   if (step === 'RESULTS') {
     const successRate = (score / questions.length) * 100;
     return (
@@ -278,10 +270,8 @@ const TestMode: React.FC = () => {
     );
   }
 
-  // 4. Testing Screen
   return (
     <div className="w-full max-w-lg flex flex-col gap-8">
-      {/* Question Card */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-rose-100 border border-rose-50 p-10 text-center relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-rose-50">
           <div 
@@ -316,7 +306,6 @@ const TestMode: React.FC = () => {
         </div>
       </div>
 
-      {/* Options Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {currentQuestion?.options.map((option, idx) => {
           const isKtoR = currentQuestion.type === 'kanji-to-reading';
@@ -348,7 +337,6 @@ const TestMode: React.FC = () => {
         })}
       </div>
 
-      {/* Footer Action */}
       <div className="flex justify-center h-16">
         {isAnswered && (
           <button
