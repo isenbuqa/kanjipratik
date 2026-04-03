@@ -19,15 +19,24 @@ import TestMode from './components/TestMode';
 const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>(AppMode.FLASHCARD);
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [semester, setSemester] = useState<number>(1);
   const [weekFilter, setWeekFilter] = useState<WeekFilter>('Tümü');
   const [shuffledData, setShuffledData] = useState<KanjiItem[]>([...kanjiData]);
 
   const filteredData = useMemo(() => {
-    let base = weekFilter === 'Tümü' 
-      ? shuffledData 
-      : shuffledData.filter(item => item.week === parseInt(weekFilter));
+    let base = shuffledData.filter(item => item.semester === semester);
+    if (weekFilter !== 'Tümü') {
+      base = base.filter(item => item.week === parseInt(weekFilter));
+    }
     return base;
-  }, [weekFilter, shuffledData]);
+  }, [semester, weekFilter, shuffledData]);
+
+  const weekOptions = useMemo(() => {
+    const weeks = kanjiData
+      .filter(item => item.semester === semester)
+      .map(item => item.week);
+    return Array.from(new Set(weeks)).sort((a, b) => a - b);
+  }, [semester]);
 
   const currentItem = filteredData[currentIdx % filteredData.length] || filteredData[0];
 
@@ -70,6 +79,21 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4">
+            <div className={`flex p-1 bg-rose-50/50 border border-rose-100 rounded-xl ${mode === AppMode.TEST ? 'opacity-30 pointer-events-none' : ''}`}>
+              <button 
+                onClick={() => { setSemester(1); setWeekFilter('Tümü'); setCurrentIdx(0); }}
+                className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${semester === 1 ? 'bg-white text-rose-600 shadow-sm' : 'text-rose-300 hover:text-rose-400'}`}
+              >
+                1. Dönem
+              </button>
+              <button 
+                onClick={() => { setSemester(2); setWeekFilter('Tümü'); setCurrentIdx(0); }}
+                className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${semester === 2 ? 'bg-white text-rose-600 shadow-sm' : 'text-rose-300 hover:text-rose-400'}`}
+              >
+                2. Dönem
+              </button>
+            </div>
+
             <div className={`relative transition-opacity duration-300 ${mode === AppMode.TEST ? 'opacity-30 pointer-events-none' : ''}`}>
               <select 
                 value={weekFilter}
@@ -77,7 +101,7 @@ const App: React.FC = () => {
                 className="appearance-none bg-white/60 border border-rose-100 text-rose-800 py-2 pl-4 pr-10 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-rose-200/50 cursor-pointer transition-all hover:bg-white"
               >
                 <option value="Tümü">Tümü</option>
-                {[9, 10, 11, 12, 13, 14, 15].map(w => (
+                {weekOptions.map(w => (
                   <option key={w} value={w.toString()}>Hafta {w}</option>
                 ))}
               </select>

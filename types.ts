@@ -2,6 +2,7 @@
 export interface KanjiItem {
   id: number;
   week: number;
+  semester: number;
   kanji: string;
   reading: string;
   meaning: string;
@@ -13,4 +14,4 @@ export enum AppMode {
   TEST = 'TEST'
 }
 
-export type WeekFilter = 'Tümü' | '9' | '10' | '11' | '12' | '13' | '14' | '15';
+export type WeekFilter = 'Tümü' | string;

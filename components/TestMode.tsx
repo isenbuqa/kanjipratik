@@ -18,10 +18,11 @@ interface Question {
   options: string[];
 }
 
-type TestStep = 'WEEK_SELECTION' | 'TYPE_SELECTION' | 'TESTING' | 'RESULTS';
+type TestStep = 'SEMESTER_SELECTION' | 'WEEK_SELECTION' | 'TYPE_SELECTION' | 'TESTING' | 'RESULTS';
 
 const TestMode: React.FC = () => {
-  const [step, setStep] = useState<TestStep>('WEEK_SELECTION');
+  const [step, setStep] = useState<TestStep>('SEMESTER_SELECTION');
+  const [selectedSemester, setSelectedSemester] = useState<number>(1);
   const [selectedWeek, setSelectedWeek] = useState<number | 'Tümü'>('Tümü');
   const [testType, setTestType] = useState<'kanji-to-reading' | 'reading-to-kanji'>('kanji-to-reading');
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -41,9 +42,9 @@ const TestMode: React.FC = () => {
     const isKtoR = type === 'kanji-to-reading';
     const correctAnswer = isKtoR ? item.reading : item.kanji;
     
-    // Kendisi hariç tüm adaylar
+    // Kendisi hariç tüm adaylar (Aynı dönemden olanları tercih et)
     const candidates = kanjiData.filter(d => 
-      isKtoR ? d.reading !== item.reading : d.kanji !== item.kanji
+      (isKtoR ? d.reading !== item.reading : d.kanji !== item.kanji) && d.semester === item.semester
     );
 
     const scoredCandidates = candidates.map(c => {
@@ -104,9 +105,10 @@ const TestMode: React.FC = () => {
 
   const startTest = (type: 'kanji-to-reading' | 'reading-to-kanji') => {
     setTestType(type);
-    const baseData = selectedWeek === 'Tümü' 
-      ? [...kanjiData] 
-      : kanjiData.filter(item => item.week === selectedWeek);
+    let baseData = kanjiData.filter(item => item.semester === selectedSemester);
+    if (selectedWeek !== 'Tümü') {
+      baseData = baseData.filter(item => item.week === selectedWeek);
+    }
     
     const newQuestions: Question[] = baseData
       .sort(() => Math.random() - 0.5)
@@ -157,11 +159,22 @@ const TestMode: React.FC = () => {
   };
 
   const resetToMenu = () => {
-    setStep('WEEK_SELECTION');
+    setStep('SEMESTER_SELECTION');
+    setSelectedSemester(1);
     setSelectedWeek('Tümü');
   };
 
-  if (step === 'WEEK_SELECTION') {
+  if (step === 'SEMESTER_SELECTION') {
+    const getWeekRange = (sem: number) => {
+      const weeks = kanjiData
+        .filter(item => item.semester === sem)
+        .map(item => item.week);
+      if (weeks.length === 0) return 'Henüz veri yok';
+      const min = Math.min(...weeks);
+      const max = Math.max(...weeks);
+      return min === max ? `Hafta ${min}` : `Hafta ${min} - ${max}`;
+    };
+
     return (
       <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in duration-500 border border-rose-50">
         <div className="flex flex-col items-center mb-10">
@@ -169,11 +182,47 @@ const TestMode: React.FC = () => {
             <Brain size={40} className="text-rose-400" />
           </div>
           <h2 className="text-3xl font-black text-slate-800 mb-2">Sakura Quiz</h2>
+          <p className="text-slate-400 text-center max-w-sm">Test etmek istediğin dönemi seç!</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <button
+            onClick={() => { setSelectedSemester(1); setStep('WEEK_SELECTION'); }}
+            className="group p-8 bg-white border-2 border-slate-100 rounded-[2rem] text-center hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-95"
+          >
+            <p className="text-2xl font-bold text-slate-700">1. Dönem</p>
+            <p className="text-sm text-slate-400 mt-2">{getWeekRange(1)}</p>
+          </button>
+          <button
+            onClick={() => { setSelectedSemester(2); setStep('WEEK_SELECTION'); }}
+            className="group p-8 bg-white border-2 border-slate-100 rounded-[2rem] text-center hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-95"
+          >
+            <p className="text-2xl font-bold text-slate-700">2. Dönem</p>
+            <p className="text-sm text-slate-400 mt-2">{getWeekRange(2)}</p>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'WEEK_SELECTION') {
+    const weeks = Array.from(new Set(
+      kanjiData
+        .filter(item => item.semester === selectedSemester)
+        .map(item => item.week)
+    )).sort((a, b) => a - b);
+    return (
+      <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in duration-500 border border-rose-50">
+        <div className="flex flex-col items-center mb-10">
+          <div className="bg-rose-50 w-20 h-20 rounded-3xl flex items-center justify-center mb-6 shadow-inner">
+            <Brain size={40} className="text-rose-400" />
+          </div>
+          <h2 className="text-3xl font-black text-slate-800 mb-2">{selectedSemester}. Dönem Quiz</h2>
           <p className="text-slate-400 text-center max-w-sm">Test etmek istediğin haftayı seçerek başla!</p>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[9, 10, 11, 12, 13, 14, 15].map(week => (
+          {weeks.map(week => (
             <button
               key={week}
               onClick={() => handleWeekSelect(week)}
@@ -190,6 +239,13 @@ const TestMode: React.FC = () => {
             <p className="text-sm font-bold">Hepsi</p>
           </button>
         </div>
+        <button
+          onClick={() => setStep('SEMESTER_SELECTION')}
+          className="mt-8 w-full text-slate-400 font-bold hover:text-rose-400 transition-colors flex items-center justify-center gap-2"
+        >
+          <ArrowRight size={16} className="rotate-180" />
+          Dönem Seçimine Dön
+        </button>
       </div>
     );
   }
