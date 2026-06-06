@@ -170,9 +170,15 @@ const TestMode: React.FC = () => {
         .filter(item => item.semester === sem)
         .map(item => item.week);
       if (weeks.length === 0) return 'Henüz veri yok';
-      const min = Math.min(...weeks);
-      const max = Math.max(...weeks);
-      return min === max ? `Hafta ${min}` : `Hafta ${min} - ${max}`;
+      const normalWeeks = weeks.filter(w => w !== 8);
+      const hasFinal = weeks.includes(8) && sem === 2;
+      if (normalWeeks.length === 0) {
+        return hasFinal ? 'Final' : 'Henüz veri yok';
+      }
+      const min = Math.min(...normalWeeks);
+      const max = Math.max(...normalWeeks);
+      const baseRange = min === max ? `Hafta ${min}` : `Hafta ${min} - ${max}`;
+      return hasFinal ? `${baseRange} ve Final` : baseRange;
     };
 
     return (
@@ -224,12 +230,16 @@ const TestMode: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {weeks.map(week => (
             <button
-              key={week}
-              onClick={() => handleWeekSelect(week)}
-              className="group p-4 bg-white border-2 border-slate-100 rounded-3xl text-left hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-95"
+               key={week}
+               onClick={() => handleWeekSelect(week)}
+               className="group p-4 bg-white border-2 border-slate-100 rounded-3xl text-left hover:border-rose-300 hover:bg-rose-50/50 transition-all active:scale-95"
             >
-              <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest mb-1">Hafta</p>
-              <p className="text-xl font-bold text-slate-700">{week}</p>
+              <p className="text-[10px] font-black text-rose-300 uppercase tracking-widest mb-1">
+                {week === 8 && selectedSemester === 2 ? 'Sınav' : 'Hafta'}
+              </p>
+              <p className="text-xl font-bold text-slate-700">
+                {week === 8 && selectedSemester === 2 ? 'Final' : week}
+              </p>
             </button>
           ))}
           <button
@@ -258,7 +268,9 @@ const TestMode: React.FC = () => {
             <Settings size={40} className="text-rose-400" />
           </div>
           <h2 className="text-3xl font-black text-slate-800 mb-2">Test Tipini Seç</h2>
-          <p className="text-slate-400 text-center max-w-sm">Hafta {selectedWeek} için nasıl bir test istersin?</p>
+          <p className="text-slate-400 text-center max-w-sm">
+            {selectedWeek === 8 && selectedSemester === 2 ? '2. Dönem Final' : `Hafta ${selectedWeek}`} için nasıl bir test istersin?
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -310,7 +322,7 @@ const TestMode: React.FC = () => {
           </div>
           <h2 className="text-3xl font-black text-slate-800 mb-2">Test Sonucu</h2>
           <p className="text-rose-400 font-bold uppercase tracking-widest text-xs">
-            Hafta {selectedWeek} &middot; {testType === 'kanji-to-reading' ? 'Kanji -> Okunuş' : 'Okunuş -> Kanji'}
+            {selectedWeek === 8 && selectedSemester === 2 ? '2. Dönem Final' : `Hafta ${selectedWeek}`} &middot; {testType === 'kanji-to-reading' ? 'Kanji -> Okunuş' : 'Okunuş -> Kanji'}
           </p>
         </div>
         

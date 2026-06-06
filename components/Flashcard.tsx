@@ -29,7 +29,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ item }) => {
           
           <div className="mb-6">
             <span className="inline-block px-4 py-1.5 bg-rose-50 text-rose-500 text-[10px] font-black rounded-full uppercase tracking-[0.2em] border border-rose-100">
-              Hafta {item.week}
+              {item.week === 8 && item.semester === 2 ? 'Final' : `Hafta ${item.week}`}
             </span>
           </div>
 

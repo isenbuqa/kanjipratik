@@ -8,7 +8,9 @@ import {
   Filter, 
   Shuffle, 
   Flower2,
-  Brain
+  Brain,
+  Search,
+  X
 } from 'lucide-react';
 import { kanjiData } from './data/kanjiData';
 import { AppMode, KanjiItem, WeekFilter } from './types';
@@ -22,6 +24,40 @@ const App: React.FC = () => {
   const [semester, setSemester] = useState<number>(1);
   const [weekFilter, setWeekFilter] = useState<WeekFilter>('Tümü');
   const [shuffledData, setShuffledData] = useState<KanjiItem[]>([...kanjiData]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase().trim();
+    const trQuery = searchQuery.toLocaleLowerCase('tr').trim();
+    return kanjiData.filter(item => {
+      const kanjiVal = item.kanji.toLowerCase();
+      const readingVal = item.reading.toLowerCase();
+      const meaningVal = item.meaning.toLowerCase();
+      const meaningTrVal = item.meaning.toLocaleLowerCase('tr');
+      return kanjiVal.includes(query) ||
+             readingVal.includes(query) ||
+             meaningVal.includes(query) ||
+             meaningTrVal.includes(trQuery);
+    });
+  }, [searchQuery]);
+
+  const handleSelectResult = useCallback((item: KanjiItem) => {
+    setSemester(item.semester);
+    setWeekFilter(item.week.toString());
+    if (mode === AppMode.TEST) {
+      setMode(AppMode.FLASHCARD);
+    }
+    
+    const targetFiltered = shuffledData.filter(x => x.semester === item.semester && x.week === item.week);
+    const idx = targetFiltered.findIndex(x => x.id === item.id);
+    if (idx !== -1) {
+      setCurrentIdx(idx);
+    } else {
+      setCurrentIdx(0);
+    }
+    setSearchQuery('');
+  }, [shuffledData, mode]);
 
   const filteredData = useMemo(() => {
     let base = shuffledData.filter(item => item.semester === semester);
@@ -61,24 +97,94 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col pb-10">
+      {/* Search overlay background to close search list on outside click */}
+      {searchQuery.trim() && (
+        <div 
+          className="fixed inset-0 z-40 bg-transparent" 
+          onClick={() => setSearchQuery('')}
+        />
+      )}
+
       {/* Header */}
-      <header className="glass-panel sticky top-0 z-40 px-4 py-4 sm:px-8 border-b border-rose-100">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-rose-300 to-rose-400 p-2 rounded-2xl text-white sakura-shadow">
-              <Flower2 size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-rose-800 tracking-tight leading-none">
-                Kanji Pratik
-              </h1>
-              <p className="text-[10px] sm:text-xs text-rose-400 font-bold uppercase tracking-widest mt-1">
-                Sakura Edition
-              </p>
+      <header className="glass-panel sticky top-0 z-40 px-4 py-3 sm:px-8 border-b border-rose-100 bg-white/80 backdrop-blur-md">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center justify-between md:justify-start gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-rose-300 to-rose-400 p-2 rounded-2xl text-white sakura-shadow">
+                <Flower2 size={24} />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-rose-800 tracking-tight leading-none">
+                  Kanji Pratik
+                </h1>
+                <p className="text-[10px] sm:text-xs text-rose-400 font-bold uppercase tracking-widest mt-1">
+                  Sakura Edition
+                </p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 sm:gap-4">
+          {/* Search bar inside header */}
+          <div className="relative flex-1 max-w-sm w-full md:mx-4 z-50">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Kanji, okunuş veya anlam ara..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/60 border border-rose-100 text-rose-800 py-2.5 pl-10 pr-10 rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-rose-200/50 focus:bg-white transition-all shadow-sm"
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-rose-300 pointer-events-none">
+                <Search size={16} />
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-rose-300 hover:text-rose-500 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            {/* Floating Dropdown results */}
+            {searchQuery.trim() && (
+              <div className="absolute left-0 right-0 mt-2 bg-white/95 backdrop-blur-md rounded-2xl border border-rose-100 shadow-xl max-h-80 overflow-y-auto z-50 p-1.5 scrollbar-thin animate-in fade-in slide-in-from-top-1">
+                {searchResults.length > 0 ? (
+                  searchResults.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelectResult(item)}
+                      className="w-full text-left flex items-center gap-3 p-2 rounded-xl hover:bg-rose-50/80 transition-all active:scale-[0.98]"
+                    >
+                      <div className="bg-gradient-to-br from-rose-50 to-rose-100 text-rose-700 font-bold text-lg rounded-xl h-10 w-10 flex items-center justify-center shrink-0 border border-rose-200/50 text-sans">
+                        {item.kanji}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-1.5 flex-wrap">
+                          <span className="text-xs font-mono font-bold text-rose-400 bg-rose-50/60 px-1.5 py-0.5 rounded">
+                            {item.reading}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-slate-700 truncate mt-0.5">
+                          {item.meaning}
+                        </p>
+                      </div>
+                      <span className="text-[10px] font-bold text-rose-300/90 whitespace-nowrap bg-rose-50/40 px-2 py-0.5 rounded-md border border-rose-100/50 shrink-0">
+                        {item.semester}. Dönem &middot; {item.week === 8 && item.semester === 2 ? 'Final' : `${item.week}. Hafta`}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-rose-400 font-medium text-xs">
+                    Sonuç bulunamadı: "{searchQuery}"
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-4 justify-between md:justify-end">
             <div className={`flex p-1 bg-rose-50/50 border border-rose-100 rounded-xl ${mode === AppMode.TEST ? 'opacity-30 pointer-events-none' : ''}`}>
               <button 
                 onClick={() => { setSemester(1); setWeekFilter('Tümü'); setCurrentIdx(0); }}
@@ -102,7 +208,7 @@ const App: React.FC = () => {
               >
                 <option value="Tümü">Tümü</option>
                 {weekOptions.map(w => (
-                  <option key={w} value={w.toString()}>Hafta {w}</option>
+                  <option key={w} value={w.toString()}>{w === 8 ? 'Final' : `Hafta ${w}`}</option>
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-rose-300">
